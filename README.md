@@ -168,8 +168,10 @@ CREATE TABLE db_{db_id}.todo_items (
    实时监控，本地缓存，更精准的数据预估
 
 ## 7. 总结
+没有完美的技术方案，只有最适合当前阶段的平衡艺术。
+本方案以 Yjs 客户端 CRDT + 双网关隔离(业务网关，webSocket网关) + 64×16 分片 + serverless 媒体流 + JWT 短效期 + Redis 缓存控制 为核心，
+在 100M DAU、10 亿用户、1000 人大组、≤4 分钟视频、实时编辑立即可见 的严苛要求下，
+实现了 低延迟（<100ms）、高可用、可扩展、安全合规（防盗链 + 登出即失效） 的设计闭环。
 
-1. 该方案是基于100M DAU + 约3-10亿用户量而设计。
-2. 实时强：CRDT 客户端合并 + WebSocket + Kafka 持久化
-3. 可扩展：MySQL 64×16 分表 + ShardingSphere + Elasticsearch
+
 
