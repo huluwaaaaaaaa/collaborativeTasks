@@ -2,7 +2,9 @@
 100M DAU | 约 3–10 亿用户 | 1000 人大组 | 4 分钟视频
 
 ### 1. 系统架构图
+
 ![系统架构图](imags/architecture.png)
++图：系统架构图（核心组件与交互）。
 
 ### 2. 可扩展性策略
 
@@ -96,6 +98,7 @@ CREATE TABLE db_{db_id}.todo_items (
 #### 5.1 鉴权流程
 
 ![鉴权时序图](imags/check_permission.png)
++图：鉴权流程（三层统一：网关鉴权 → 统一校验 → 缓存）。
 
 权限校验采用“三层统一”架构：
 
@@ -107,19 +110,30 @@ CREATE TABLE db_{db_id}.todo_items (
 #### 5.2 分享以及授权逻辑
 
 ![分享列表](imags/share.png)
++图：分享与授权逻辑（成员与权限可视化）。
 
 
 #### 5.3 视频上传流程
 ![视频上传流程时序图](imags/uploadvideo.png)
++图：视频上传流程（直传 S3，Serverless 转码，状态广播）。
 
+重点：
 直传 S3 → 零服务器压力
 实时状态 → uploading → done
 serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 
+流程：
+1. media-server 返回预签名 URL，客户端直传 OSS/S3。
+2. 上传完成后通过 WebSocket 广播 uploading 状态。
+3. S3 触发 Lambda，调用 MediaConvert 转码为 HLS 并生成缩略图。（AWS 云服务）
+4. SNS 通知，data-server 更新 MySQL，并广播 play_url。
+5. 播放通过 Cloud CDN 使用签名 URL，起播 < 1 s。
+6. 上传链路对业务服务器带宽占用为 0。
 
 #### 5.4 视频播放流程
 
 ![视频播放流程时序图](imags/lookvideo1.png)
++图：视频播放流程（动态签名 URL，IP 绑定，1 小时过期）。
 
 不存签名 URL 
 动态生成 → 每次播放都校验权限
@@ -127,3 +141,7 @@ serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 CDN 加速 
 
 ## 6. 总结
+
+该方案是基于100M DAU + 约3-10亿用户量而设计，单机房部署。
+实时强：CRDT 客户端合并 + WebSocket + Kafka 大组路由
+可扩展：MySQL 64×16 分表 + ShardingSphere + Elasticsearch
