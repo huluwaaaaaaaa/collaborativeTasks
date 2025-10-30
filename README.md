@@ -123,7 +123,7 @@ CREATE TABLE db_{db_id}.todo_items (
 - 实时状态 → uploading → done
 - serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 
-流程：
+详细流程：
 1. media-server 返回预签名 URL，客户端直传 OSS/S3。
 2. 上传完成后通过 WebSocket 广播 uploading 状态。
 3. S3 触发 Lambda，调用 MediaConvert 转码为 HLS 并生成缩略图。（AWS 云服务）
@@ -146,12 +146,12 @@ CREATE TABLE db_{db_id}.todo_items (
 
 ![CRDT持久化流程图](imags/crdt-update-flow.png)
 
-**详细流程：
+详细流程：
 
 1. 客户端 Yjs 每 5 秒或 100 次操作，调用 getState() 生成 snapshot → 推送 WebSocket Server；
 2. WebSocket Server 转发 + 推 Kafka（list-snapshots 主题，按 list_id 分区）；
 3. data-server Worker 消费 Kafka，直接 REPLACE INTO 覆盖 MySQL；
-4. 冷启动：客户端从 MySQL 加载最新 snapshot → Yjs 恢复。 **
+4. 冷启动：客户端从 MySQL 加载最新 snapshot → Yjs 恢复。 
 
 优点
 - 零服务端逻辑：不解析 CRDT
@@ -159,9 +159,17 @@ CREATE TABLE db_{db_id}.todo_items (
 - 高可用：Kafka 持久化
 - 冷启动快：直接加载最新 snapshot
 
+## 6. 风险点
 
-## 6. 总结
+1. 客户端推送 snapshot 丢失，增加重试
+2. Kafka 分区热点
+   热点告警，手动/自动扩容，热点列表拆分(新增用户id/时间戳进行分片)
+3. Redis 内存爆炸，热点key。
+   实时监控，本地缓存，更精准的数据预估
 
-1. 该方案是基于100M DAU + 约3-10亿用户量而设计，单机房部署。
-2. 实时强：CRDT 客户端合并 + WebSocket + Kafka 大组路由
+## 7. 总结
+
+1. 该方案是基于100M DAU + 约3-10亿用户量而设计。
+2. 实时强：CRDT 客户端合并 + WebSocket + Kafka 持久化
 3. 可扩展：MySQL 64×16 分表 + ShardingSphere + Elasticsearch
+
