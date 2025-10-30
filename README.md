@@ -1,6 +1,7 @@
 ## 背景介绍
 100M DAU | 约 3–10 亿用户 | 1000 人大组 | 4 分钟视频
 
+
 ### 1. 系统架构图
 
 ![系统架构图](imags/architecture.png)
@@ -138,6 +139,27 @@ CREATE TABLE db_{db_id}.todo_items (
 2. 动态生成 → 每次播放都校验权限
 3. 防盗链 → IP 绑定 + 1 小时过期
 4. CDN 加速 
+
+#### 5.5 CRDT 持久化
+
+![CRDT持久化时序图](imags/crdt-update.png)
+
+![CRDT持久化流程图](imags/crdt-update-flow.png)
+
+**详细流程：
+
+1. 客户端 Yjs 每 5 秒或 100 次操作，调用 getState() 生成 snapshot → 推送 WebSocket Server；
+2. WebSocket Server 转发 + 推 Kafka（list-snapshots 主题，按 list_id 分区）；
+3. data-server Worker 消费 Kafka，直接 REPLACE INTO 覆盖 MySQL；
+4. 冷启动：客户端从 MySQL 加载最新 snapshot → Yjs 恢复。 **
+
+优点
+
+- 零服务端逻辑：不解析 CRDT
+- 低内存：无影子文档
+- 高可用：Kafka 持久化
+- 冷启动快：直接加载最新 snapshot
+
 
 ## 6. 总结
 
