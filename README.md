@@ -2,7 +2,7 @@
 100M DAU | 约 3–10 亿用户 | 1000 人大组 | 4 分钟视频
 
 ### 1. 系统架构图
-![系统架构图](imags/lookvideo.png)
+![系统架构图](imags/architecture.png)
 
 ### 2. 可扩展性策略
 
