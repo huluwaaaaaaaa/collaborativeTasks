@@ -2,7 +2,7 @@
 100M DAU | 约 3–10 亿用户 | 1000 人大组 | 4 分钟视频
 
 ### 1. 系统架构图
-![系统架构图](https://github.com/user-attachments/assets/2290aba4-518b-431c-9922-a8f0be33301f)
+![系统架构图](imags/lookvideo.png)
 
 ### 2. 可扩展性策略
 
@@ -30,7 +30,7 @@
 | 前端 | Vue.js 3 | 响应式 + Yjs 集成好 | React：包大 |
 | 后端 | Spring Boot 3 | 企业级稳定 | Node.js：并发弱 |
 | 实时 | Yjs CRDT + WebSocket | 客户端合并，无锁 | OT：服务端复杂 |
-| 广播 | Kafka | 按 list_id 分区 | RocketMq:吞吐量 |
+| 广播 | Kafka | 按 list_id 分区 | RocketMQ：吞吐量 |
 | 数据库 | MySQL 8.0 + 64×16 分片 | 单表性能最优 | TiDB：学习成本 |
 | 分片路由 | ShardingSphere | 零侵入 | 手动 SQL：易错 |
 | 搜索 | Elasticsearch | 中文分词 + 拼音 | Redis ZSET：不支持分词 |
@@ -93,9 +93,37 @@ CREATE TABLE db_{db_id}.todo_items (
 
 ### 5. 重点功能底层细节
 
-#### 5.1 视频上传与播放流程
+#### 5.1 鉴权流程
 
-#### 5.2 分享逻辑
+![鉴权时序图](imags/check_permission.png)
 
+权限校验采用“三层统一”架构：
+
+- 网关层（Spring Cloud Gateway）拦截所有 REST 请求，解析 JWT 获取 `user_id`。
+- 统一调用 `user-server.check_permission(user_id, list_id, action)`，集中校验 `edit/view` 权限。
+- 权限缓存于 Redis Hash，支持写穿 + 主动失效；在 QPS < 1000 时延迟 < 5ms。
+- 业务服务（如 `media-server` 获取签名 URL）仅接收已授权请求，避免重复校验，保证高性能、一致性与可维护性。
+
+#### 5.2 分享以及授权逻辑
+
+![分享列表](imags/share.png)
+
+
+#### 5.3 视频上传流程
+![视频上传流程时序图](imags/uploadvideo.png)
+
+直传 S3 → 零服务器压力
+实时状态 → uploading → done
+serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
+
+
+#### 5.4 视频播放流程
+
+![视频播放流程时序图](imags/lookvideo1.png)
+
+不存签名 URL 
+动态生成 → 每次播放都校验权限
+防盗链 → IP 绑定 + 1 小时过期
+CDN 加速 
 
 ## 6. 总结
