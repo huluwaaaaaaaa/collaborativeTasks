@@ -4,7 +4,7 @@
 ### 1. 系统架构图
 
 ![系统架构图](imags/architecture.png)
-+图：系统架构图（核心组件与交互）。
+
 
 ### 2. 可扩展性策略
 
@@ -98,7 +98,7 @@ CREATE TABLE db_{db_id}.todo_items (
 #### 5.1 鉴权流程
 
 ![鉴权时序图](imags/check_permission.png)
-+图：鉴权流程（三层统一：网关鉴权 → 统一校验 → 缓存）。
+
 
 权限校验采用“三层统一”架构：
 
@@ -110,12 +110,12 @@ CREATE TABLE db_{db_id}.todo_items (
 #### 5.2 分享以及授权逻辑
 
 ![分享列表](imags/share.png)
-+图：分享与授权逻辑（成员与权限可视化）。
+
 
 
 #### 5.3 视频上传流程
 ![视频上传流程时序图](imags/uploadvideo.png)
-+图：视频上传流程（直传 S3，Serverless 转码，状态广播）。
+
 
 重点：
 直传 S3 → 零服务器压力
@@ -133,7 +133,6 @@ serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 #### 5.4 视频播放流程
 
 ![视频播放流程时序图](imags/lookvideo1.png)
-+图：视频播放流程（动态签名 URL，IP 绑定，1 小时过期）。
 
 不存签名 URL 
 动态生成 → 每次播放都校验权限
@@ -142,6 +141,6 @@ CDN 加速
 
 ## 6. 总结
 
-该方案是基于100M DAU + 约3-10亿用户量而设计，单机房部署。
-实时强：CRDT 客户端合并 + WebSocket + Kafka 大组路由
-可扩展：MySQL 64×16 分表 + ShardingSphere + Elasticsearch
+1. 该方案是基于100M DAU + 约3-10亿用户量而设计，单机房部署。
+2. 实时强：CRDT 客户端合并 + WebSocket + Kafka 大组路由
+3. 可扩展：MySQL 64×16 分表 + ShardingSphere + Elasticsearch
