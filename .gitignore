@@ -1,0 +1,33 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+
+# Cursor files
+.cursor/
+
+# macOS
+.DS_Store
+
+# Maven
+target/
+
+# Logs
+*.log
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Generated files
+hs_err_pid*
+
+db/
+
+doc/
