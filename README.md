@@ -118,27 +118,27 @@ CREATE TABLE db_{db_id}.todo_items (
 ![视频上传流程时序图](imags/uploadvideo.png)
 
 
-重点：
-1. 直传 S3 → 零服务器压力
-2. 实时状态 → uploading → done
-3. serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
+优点
+- 直传 S3 → 零服务器压力
+- 实时状态 → uploading → done
+- serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 
 流程：
 1. media-server 返回预签名 URL，客户端直传 OSS/S3。
 2. 上传完成后通过 WebSocket 广播 uploading 状态。
 3. S3 触发 Lambda，调用 MediaConvert 转码为 HLS 并生成缩略图。（AWS 云服务）
 4. SNS 通知，data-server 更新 MySQL，并广播 play_url。
-5. 播放通过 Cloud CDN 使用签名 URL，起播 < 1 s。
-6. 上传链路对业务服务器带宽占用为 0。
+5. 上传链路对业务服务器带宽占用为 0。
 
 #### 5.4 视频播放流程
 
 ![视频播放流程时序图](imags/lookvideo1.png)
 
-1. 不存签名 URL 
-2. 动态生成 → 每次播放都校验权限
-3. 防盗链 → IP 绑定 + 1 小时过期
-4. CDN 加速 
+优点
+- 不存签名 URL 
+- 动态生成 → 每次播放都校验权限
+- 防盗链 → IP 绑定 + 1 小时过期
+- CDN 加速 
 
 #### 5.5 CRDT 持久化
 
@@ -154,7 +154,6 @@ CREATE TABLE db_{db_id}.todo_items (
 4. 冷启动：客户端从 MySQL 加载最新 snapshot → Yjs 恢复。 **
 
 优点
-
 - 零服务端逻辑：不解析 CRDT
 - 低内存：无影子文档
 - 高可用：Kafka 持久化
