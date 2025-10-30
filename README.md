@@ -118,9 +118,9 @@ CREATE TABLE db_{db_id}.todo_items (
 
 
 重点：
-直传 S3 → 零服务器压力
-实时状态 → uploading → done
-serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
+1. 直传 S3 → 零服务器压力
+2. 实时状态 → uploading → done
+3. serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 
 流程：
 1. media-server 返回预签名 URL，客户端直传 OSS/S3。
@@ -134,10 +134,10 @@ serverless 转码 → Lambda + MediaConvert + SNS通知  （AWS云服务）
 
 ![视频播放流程时序图](imags/lookvideo1.png)
 
-不存签名 URL 
-动态生成 → 每次播放都校验权限
-防盗链 → IP 绑定 + 1 小时过期
-CDN 加速 
+1. 不存签名 URL 
+2. 动态生成 → 每次播放都校验权限
+3. 防盗链 → IP 绑定 + 1 小时过期
+4. CDN 加速 
 
 ## 6. 总结
 
