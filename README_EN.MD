@@ -1,3 +1,4 @@
+![中文](README.md)|![EN](README_EN.md)
 ### Overview
 100M DAU | ~0.3–1.0B users | 1,000-person groups | 4-minute videos
 
