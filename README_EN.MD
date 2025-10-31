@@ -3,30 +3,21 @@
 ### Overview
 100M DAU | ~0.3–1.0B users | 1,000-person groups | 4-minute videos
 
+#### Capacity Estimation
+- DAU = 100M; assume each user performs 20 operations/day → daily requests = 2B
+- Traffic is not evenly distributed across 24h. Assume 80% of traffic is concentrated in two peak windows (9–11 a.m., 2–4 p.m.), totaling 4 hours.
+- Peak window seconds: 4 × 60 × 60 = 14,400 s
+- Average QPS over the whole day (read + write): 2B ÷ 86,400 ≈ 23k
+- Peak QPS calculation:
+  - Requests in peak windows = 2B × 80% ≈ 1.6B
+  - Average QPS during peaks = 1.6B ÷ 14,400 ≈ 110k
+  - Considering burst factor ~2× within peak windows → peak QPS ≈ 220k
+
 ### 1. Architecture Diagram
 
 ![Architecture](imags/architecture.png)
 
-### 2. Scalability Strategies
-
-| Challenge | Solution | Expected Result |
-| --- | --- | --- |
-| 100M DAU → peak 170k QPS | 64 DB shards × 2000 QPS/instance + Redis hot-key cache | DB effective load < 20k QPS |
-| 1B total users | 64×16 table sharding, ~10M rows per table | Write latency < 10 ms |
-| Real-time updates for 1,000-member groups | Client-side CRDT merge + Kafka partitioning + consistent hashing | Update latency < 100 ms |
-| Hot list avalanche | Redis cache + 1h TTL + write-through | Cache hit rate > 95% |
-| Access latency | CloudFront edge caching | Startup < 1 s, updates < 100 ms |
-
-#### Capacity Planning
-
-| Component | Scale |
-| --- | --- |
-| Spring Boot | 60 Pods |
-| MySQL | 64 primary + 128 replicas |
-| WebSocket Server | 60 Pods (50k connections each) |
-| Kafka | 1000 partitions |
-
-### 3. Technology Choices
+### 2. Technology Choices
 
 | Area | Choice | Rationale | Alternatives/Trade-offs |
 | --- | --- | --- | --- |
@@ -41,7 +32,7 @@
 | Media storage | Amazon S3 | Virtually unlimited | MinIO: heavier ops |
 | Transcoding | MediaConvert | Serverless | FFmpeg: operational burden |
 
-### 4. Data Model
+### 3. Data Model
 
 — Users (64×16 = 1024 tables)
 ```sql
@@ -94,9 +85,9 @@ CREATE TABLE db_{db_id}.todo_items (
 ) ENGINE=InnoDB;
 ```
 
-### 5. Key Implementation Details
+### 4. Key Implementation Details
 
-#### 5.1 Auth Flow
+#### 4.1 Auth Flow
 
 ![Auth Sequence](imags/check_permission.png)
 
@@ -106,11 +97,11 @@ Three-layer unified authorization:
 - Permissions cached in Redis Hash with write-through + active invalidation; < 5 ms latency when QPS < 1000.
 - Business services (e.g., `media-server` to obtain signed URL) only accept authorized requests to avoid duplicate checks.
 
-#### 5.2 Sharing and Authorization
+#### 4.2 Sharing and Authorization
 
 ![Share UI](imags/share.png)
 
-#### 5.3 Video Upload Flow
+#### 4.3 Video Upload Flow
 ![Upload Sequence](imags/uploadvideo.png)
 
 Pros
@@ -125,7 +116,7 @@ Detailed flow:
 4. SNS notifies; `data-server` updates MySQL and broadcasts `play_url`.
 5. Upload path consumes 0 bandwidth on business servers.
 
-#### 5.4 Video Playback Flow
+#### 4.4 Video Playback Flow
 
 ![Playback Sequence](imags/lookvideo1.png)
 
@@ -135,7 +126,7 @@ Pros
 - Anti-leech → IP binding + 1-hour expiry
 - CDN acceleration
 
-#### 5.5 CRDT Persistence
+#### 4.5 CRDT Persistence
 
 ![CRDT Persistence Sequence](imags/crdt-update.png)
 
@@ -153,13 +144,13 @@ Pros
 - High availability: Kafka durability
 - Fast cold start: load latest snapshot directly
 
-### 6. Risks
+### 5. Risks
 
 1) Snapshot push from client may be lost → add retry and idempotency.
 2) Kafka partition hotspots → hotspot alerting; auto/manual repartition; split hot lists (add user_id/timestamp into sharding key).
 3) Redis memory blow-up / hot keys → real-time monitoring, local in-process cache, better demand estimation and capacity planning.
 
-### 7. Summary
+### 6. Summary
 
 There is no perfect architecture—only the best tradeoff for the current stage.
 This design centers on Yjs client-side CRDT, dual gateways (business + WebSocket), 64×16 sharding, serverless media pipeline, short-lived JWT, and Redis cache control.
